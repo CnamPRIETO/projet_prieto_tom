@@ -1,0 +1,81 @@
+.panier-titre {
+    text-align: center;
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 2em;
+    border-bottom: 2px solid #f0f0f0;
+    padding-bottom: 10px;
+}
+
+.produit-panier {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #fafafa;
+    padding: 15px;
+    margin-bottom: 10px;
+    border: 1px solid #e0e0e0;
+    border-radius: 5px;
+    transition: background-color 0.3s;
+}
+
+.produit-panier:hover {
+    background-color: #f5f5f5;
+}
+
+.details-produit {
+    display: flex;
+    flex-direction: column;
+}
+
+.ref-produit {
+    font-weight: bold;
+    color: #555;
+}
+
+.desc-produit {
+    color: #777;
+    margin: 5px 0;
+}
+
+.prix-produit {
+    color: #000;
+    font-size: 1.1em;
+}
+
+.btn-retirer {
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.btn-retirer:hover {
+    background-color: #e60000;
+}
+
+.total-prix {
+    text-align: right;
+    font-size: 1.5em;
+    margin-top: 20px;
+    color: #333;
+}
+
+.home-link {
+    display: inline-block;
+    padding: 10px 20px;
+    background-color: #28a745;
+    color: white;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s ease;
+    margin-bottom: 20px;
+}
+
+
+.home-link:hover {
+    background-color: #218838;
+}

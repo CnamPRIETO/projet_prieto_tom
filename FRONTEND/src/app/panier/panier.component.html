@@ -1,0 +1,15 @@
+<h2 class="panier-titre">Mon Panier</h2>
+<div class="produit-panier" *ngFor="let p of produitsPanier$ | async">
+  <div class="details-produit">
+    <p class="ref-produit">{{ p.ref }}</p>
+    <p class="desc-produit">{{ p.desc }}</p>
+    <p class="prix-produit">{{ p.prix }} $</p>
+  </div>
+  <button class="btn-retirer" (click)="delFromPanier(p)">Retirer</button>
+</div>
+<div class="total-prix">
+  <strong>Total des articles :</strong> {{ totalProduits$ | async }} 
+  <strong>Total : </strong>{{ totalPrix$ | async }} $
+</div>
+
+<a routerLink="/" class="home-link">Retour à l'accueil</a>

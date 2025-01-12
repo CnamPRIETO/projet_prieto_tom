@@ -1,0 +1,12 @@
+<app-header></app-header>
+<nav>
+  <a routerLink="/">Catalogue</a>
+  <a routerLink="/panier">Panier</a>
+  <a routerLink="/login">Connexion</a>
+  <a routerLink="/register">Inscription</a>
+  <a routerLink="/change-password">Modifier mon mot de passe</a>
+  <a routerLink="/profil">Profil</a>
+  <a href="#" (click)="logout()">Déconnexion</a>
+</nav>
+<router-outlet></router-outlet>
+<app-footer></app-footer>

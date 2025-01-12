@@ -1,0 +1,16 @@
+
+<div class="barreDeRecherche">
+    <div>    
+        <label for="FiltreRef">Rechercher par référence </label>
+        <input type="text" name="FiltreRef" [(ngModel)]="FiltreRef" (input)="rechercher()" placeholder="Rechercher par référence "/>
+    </div>
+    <div>
+        <label for="RechercherDesc">Rechercher par description</label>
+        <input type="text" name="RechercherDesc" [(ngModel)]="FiltreDesc" (input)="rechercher()" placeholder="Rechercher par description "/>
+    </div>
+    <div>
+        <label for="RechercherPrix">Rechercher avec un prix</label>
+        <input type="number" name="RechercherPrix" [(ngModel)]="FiltrePrix" (input)="rechercher()" placeholder="Rechercher par prix "/>
+    </div>
+
+</div>
