@@ -75,11 +75,13 @@ describe('FooterComponent', () => {
 
 ===== ./app/api.service.ts =====
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { Produit } from "./models/produit";
 import { User } from "./models/user";
 import { environment } from "../environments/environments";
+import { RegisterResponse, LoginResponse, UpdateUserResponse } from "./models/auth-response.interface";
+
 
 @Injectable()
 export class ApiService{
@@ -89,24 +91,41 @@ export class ApiService{
         return this.http.get<Produit[]>(environment.backendProduit);
     }
 
+    public searchProduits(criteria: {ref?: string, description?: string, prix?: number}): Observable<Produit[]> {
+        let params = new HttpParams();
+        
+        if (criteria.ref) {
+            params = params.set('ref', criteria.ref);
+        }
+        
+        if (criteria.description) {
+            params = params.set('description', criteria.description);
+        }
+        
+        if (criteria.prix !== undefined && criteria.prix !== null) {
+            params = params.set('prix', criteria.prix.toString());
+        }
+        return this.http.get<Produit[]>(environment.backendProduit, { params });
+    }
+
     // Authentification
-    public register(username: string, password: string): Observable<any> {
-        return this.http.post(`${environment.backendUser}/auth/register`, { username, password });
+    public register(username: string, password: string): Observable<RegisterResponse> {
+        return this.http.post<RegisterResponse>(`${environment.backendUser}/auth/register`, { username, password });
     }
 
-    public login(username: string, password: string): Observable<any> {
-        return this.http.post(`${environment.backendUser}/auth/login`, { username, password });
+    public login(username: string, password: string): Observable<LoginResponse> {
+        return this.http.post<LoginResponse>(`${environment.backendUser}/auth/login`, { username, password });
     }
 
-    public updateUser(userData: any, token: string): Observable<any> {
+    public updateUser(userData: User, token: string): Observable<UpdateUserResponse> {
         const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-        return this.http.put(`${environment.backendUser}/auth/user`, userData, { headers });
+        return this.http.put<UpdateUserResponse>(`${environment.backendUser}/auth/user`, userData, { headers });
     }
 
-    public deleteUser(token: string): Observable<any> {
+    public deleteUser(token: string): Observable<RegisterResponse> {
         const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-        return this.http.delete(`${environment.backendUser}/auth/user`, { headers });
-      }
+        return this.http.delete<RegisterResponse>(`${environment.backendUser}/auth/user`, { headers });
+    }
 }
 
 
@@ -115,6 +134,8 @@ import { Injectable } from '@angular/core';
 import { ApiService } from './api.service';
 import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { RegisterResponse, LoginResponse, UpdateUserResponse } from "./models/auth-response.interface";
+import { User } from './models/user';
 
 @Injectable({
   providedIn: 'root'
@@ -133,9 +154,9 @@ export class AuthService {
     return this.loggedIn.asObservable();
   }
 
-  login(username: string, password: string): Observable<any> {
+  login(username: string, password: string): Observable<LoginResponse> {
     return this.apiService.login(username, password).pipe(
-      tap((response: any) => {
+      tap((response: LoginResponse) => {
         if (response.token) {
           localStorage.setItem(this.tokenKey, response.token);
           this.loggedIn.next(true);
@@ -144,7 +165,7 @@ export class AuthService {
     );
   }
 
-  register(username: string, password: string): Observable<any> {
+  register(username: string, password: string): Observable<RegisterResponse> {
     return this.apiService.register(username, password);
   }
 
@@ -157,7 +178,7 @@ export class AuthService {
     return localStorage.getItem(this.tokenKey);
   }
 
-  updateUser(userData: any): Observable<any> {
+  updateUser(userData: User): Observable<UpdateUserResponse> {
     const token = this.getToken();
     if (token) {
       return this.apiService.updateUser(userData, token);
@@ -166,7 +187,7 @@ export class AuthService {
     }
   }
 
-  deleteAccount(): Observable<any> {
+  deleteAccount(): Observable<RegisterResponse> {
     const token = this.getToken(); // lit le token depuis le localStorage
     if (!token) {
       throw new Error('No token found');
@@ -449,14 +470,14 @@ export interface RegisterResponse {
 export class Produit {
     ref : string = "pas de ref";
     prix : number = 0;
-    desc : string = "pas de desc";
+    description : string = "pas de desc";
     stock : number = 0;
 }
 
 ===== ./app/models/user.ts =====
 export class User {
-    username: string = "pas de username";
-    password: string = "pas de password";
+    username?: string;
+    password?: string;
 }
 
 ===== ./app/auth.guard.ts =====
@@ -647,6 +668,7 @@ describe('AuthService', () => {
 import { Component } from '@angular/core';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
+import { RegisterResponse } from '../models/auth-response.interface';
 
 @Component({
   selector: 'app-profil-component',
@@ -661,7 +683,7 @@ export class ProfilComponentComponent {
     // Petite confirmation
     if (confirm('Voulez-vous vraiment supprimer votre compte ?')) {
       this.authService.deleteAccount().subscribe({
-        next: (res) => {
+        next: (res: RegisterResponse) => {
           console.log('Suppression réussie :', res);
           this.authService.logout();
           this.router.navigate(['/']);
@@ -709,7 +731,7 @@ describe('ProfilComponentComponent', () => {
 <div class="produit-panier" *ngFor="let p of produitsPanier$ | async">
   <div class="details-produit">
     <p class="ref-produit">{{ p.ref }}</p>
-    <p class="desc-produit">{{ p.desc }}</p>
+    <p class="desc-produit">{{ p.description }}</p>
     <p class="prix-produit">{{ p.prix }} $</p>
   </div>
   <button class="btn-retirer" (click)="delFromPanier(p)">Retirer</button>
@@ -820,7 +842,7 @@ export class ListeProduitsComponent {
 <div *ngFor="let objet of produits">
     <div class="produitInfo">
         <p>Référence : {{ objet.ref }}</p>
-        <p>Description : {{ objet.desc }}</p>
+        <p>Description : {{ objet.description }}</p>
         <p>Prix : {{ objet.prix }} $</p>
         <p>Stock : {{ objet.stock }}</p>
         <button (click)="ajouterAuPanier(objet)">Ajouter au Panier</button>
@@ -897,23 +919,34 @@ export class CatalogueComponent implements OnInit, OnDestroy {
   }
 
   appliquerLeFiltre() {
-    this.produitsAvecFiltre = this.produits.filter(produit => {
-      let correspond = true;
-  
-      if (this.filtresRecherches.ref) {
-        correspond = correspond && produit.ref.toLowerCase().includes(this.filtresRecherches.ref.toLowerCase());
-      }
-  
-      if (this.filtresRecherches.desc) {
-        correspond = correspond && produit.desc.toLowerCase().includes(this.filtresRecherches.desc.toLowerCase());
-      }
-  
-      if (this.filtresRecherches.prix !== null) {
-        correspond = correspond && produit.prix <= this.filtresRecherches.prix;
-      }
-  
-      return correspond;
-    });
+    const criteria: {ref?: string, description?: string, prix?: number} = {};
+
+    if (this.filtresRecherches.ref.trim() !== "") {
+      criteria.ref = this.filtresRecherches.ref.trim();
+    }
+
+    if (this.filtresRecherches.desc.trim() !== "") {
+      criteria.description = this.filtresRecherches.desc.trim();
+    }
+
+    if (this.filtresRecherches.prix !== null && !isNaN(this.filtresRecherches.prix)) {
+      criteria.prix = this.filtresRecherches.prix;
+    }
+
+    // Si aucun critère n'est fourni, utilisez getProduits pour récupérer tous les produits
+    if (Object.keys(criteria).length === 0) {
+      this.subscription = this.apiService.getProduits().subscribe((produits) => {
+        this.produitsAvecFiltre = produits;
+      });
+    } else {
+      // Sinon, utilisez searchProduits avec les critères
+      this.subscription = this.apiService.searchProduits(criteria).subscribe((produits) => {
+        this.produitsAvecFiltre = produits;
+      }, (error) => {
+        console.error('Erreur lors de la recherche des produits:', error);
+        this.produitsAvecFiltre = [];
+      });
+    }
   }
   
 
@@ -1027,6 +1060,8 @@ import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
+import { User } from '../models/user';
+import { UpdateUserResponse } from '../models/auth-response.interface';
 
 @Component({
   selector: 'app-change-password',
@@ -1109,6 +1144,7 @@ import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { LoginResponse } from '../models/auth-response.interface';
 
 @Component({
   selector: 'app-login',
@@ -1126,7 +1162,7 @@ export class LoginComponent {
 
   onLogin() {
     this.authService.login(this.username, this.password).subscribe({
-      next: () => this.router.navigate(['/']),
+      next: (response: LoginResponse) => this.router.navigate(['/']),
       error: err => this.errorMessage = err.error.message || 'Erreur lors de la connexion.'
     });
   }
@@ -1284,8 +1320,8 @@ bootstrapApplication(AppComponent, appConfig)
 ===== ./environments/environments.ts =====
 export const environment = {
     production: false,
-    backendProduit : 'https://apisansbdd.onrender.com/api/produits',
-    backendUser : 'https://apisansbdd.onrender.com/api'
+    backendProduit : 'http://localhost:443/api/produits',
+    backendUser : 'http://localhost:443/api'
 };
 
 ===== ./assets/mock/produit.json =====

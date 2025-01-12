@@ -1,5 +1,5 @@
 import { Injectable } from "@angular/core";
-import { HttpClient, HttpHeaders } from "@angular/common/http";
+import { HttpClient, HttpHeaders, HttpParams } from "@angular/common/http";
 import { Observable } from "rxjs";
 import { Produit } from "./models/produit";
 import { User } from "./models/user";
@@ -13,6 +13,23 @@ export class ApiService{
     
     public getProduits(): Observable<Produit[]> {
         return this.http.get<Produit[]>(environment.backendProduit);
+    }
+
+    public searchProduits(criteria: {ref?: string, description?: string, prix?: number}): Observable<Produit[]> {
+        let params = new HttpParams();
+        
+        if (criteria.ref) {
+            params = params.set('ref', criteria.ref);
+        }
+        
+        if (criteria.description) {
+            params = params.set('description', criteria.description);
+        }
+        
+        if (criteria.prix !== undefined && criteria.prix !== null) {
+            params = params.set('prix', criteria.prix.toString());
+        }
+        return this.http.get<Produit[]>(environment.backendProduit, { params });
     }
 
     // Authentification

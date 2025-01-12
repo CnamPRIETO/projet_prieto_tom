@@ -34,23 +34,32 @@ export class CatalogueComponent implements OnInit, OnDestroy {
   }
 
   appliquerLeFiltre() {
-    this.produitsAvecFiltre = this.produits.filter(produit => {
-      let correspond = true;
-  
-      if (this.filtresRecherches.ref) {
-        correspond = correspond && produit.ref.toLowerCase().includes(this.filtresRecherches.ref.toLowerCase());
-      }
-  
-      if (this.filtresRecherches.desc) {
-        correspond = correspond && produit.desc.toLowerCase().includes(this.filtresRecherches.desc.toLowerCase());
-      }
-  
-      if (this.filtresRecherches.prix !== null) {
-        correspond = correspond && produit.prix <= this.filtresRecherches.prix;
-      }
-  
-      return correspond;
-    });
+    const criteria: {ref?: string, description?: string, prix?: number} = {};
+
+    if (this.filtresRecherches.ref.trim() !== "") {
+      criteria.ref = this.filtresRecherches.ref.trim();
+    }
+
+    if (this.filtresRecherches.desc.trim() !== "") {
+      criteria.description = this.filtresRecherches.desc.trim();
+    }
+
+    if (this.filtresRecherches.prix !== null && !isNaN(this.filtresRecherches.prix)) {
+      criteria.prix = this.filtresRecherches.prix;
+    }
+
+    if (Object.keys(criteria).length === 0) { //aucun filtre
+      this.subscription = this.apiService.getProduits().subscribe((produits) => {
+        this.produitsAvecFiltre = produits;
+      });
+    } else {
+      this.subscription = this.apiService.searchProduits(criteria).subscribe((produits) => {
+        this.produitsAvecFiltre = produits; // avec filtre
+      }, (error) => {
+        console.error('Erreur lors de la recherche des produits:', error);
+        this.produitsAvecFiltre = [];
+      });
+    }
   }
   
 

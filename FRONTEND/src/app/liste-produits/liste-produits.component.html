@@ -1,7 +1,7 @@
 <div *ngFor="let objet of produits">
     <div class="produitInfo">
         <p>Référence : {{ objet.ref }}</p>
-        <p>Description : {{ objet.desc }}</p>
+        <p>Description : {{ objet.description }}</p>
         <p>Prix : {{ objet.prix }} $</p>
         <p>Stock : {{ objet.stock }}</p>
         <button (click)="ajouterAuPanier(objet)">Ajouter au Panier</button>

@@ -1,11 +1,11 @@
+// ./controllers/auth.controllers.js
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { v4: uuidv4 } = require('uuid');
 const { ACCESS_TOKEN_SECRET } = require("../config.js");
+const db = require("../models");
+const Utilisateurs = db.utilisateurs;
 
-// Stockage des utilisateurs en mémoire (à remplacer par une base de données en production)
-const users = [];
-
+// Fonction pour générer un token
 function generateAccessToken(user) {
     return jwt.sign(user, ACCESS_TOKEN_SECRET, { expiresIn: '1h' });
 }
@@ -20,15 +20,22 @@ exports.register = async (req, res) => {
         return res.status(400).json({ message: 'Format de nom d\'utilisateur ou mot de passe invalide.' });
     }
 
-    const existingUser = users.find(u => u.username === username);
-    if (existingUser) {
-        return res.status(400).json({ message: 'Utilisateur déjà existant.' });
-    }
-
     try {
+        // Vérifier si l'utilisateur existe déjà
+        const existingUser = await Utilisateurs.findOne({ where: { username } });
+        if (existingUser) {
+            return res.status(400).json({ message: 'Utilisateur déjà existant.' });
+        }
+
+        // Hash du mot de passe
         const hashedPassword = await bcrypt.hash(password, 10);
-        const user = { id: uuidv4(), username, password: hashedPassword };
-        users.push(user);
+
+        // Créer l'utilisateur
+        const user = await Utilisateurs.create({
+            username,
+            password: hashedPassword
+        });
+
         res.status(201).json({ message: 'Utilisateur créé avec succès.' });
     } catch (err) {
         console.error('Erreur lors de l\'inscription:', err);
@@ -46,17 +53,20 @@ exports.login = async (req, res) => {
         return res.status(400).json({ message: 'Format de nom d\'utilisateur ou mot de passe invalide.' });
     }
 
-    const user = users.find(u => u.username === username);
-    if (!user) {
-        return res.status(400).json({ message: 'Utilisateur non trouvé.' });
-    }
-
     try {
+        // Trouver l'utilisateur
+        const user = await Utilisateurs.findOne({ where: { username } });
+        if (!user) {
+            return res.status(400).json({ message: 'Utilisateur non trouvé.' });
+        }
+
+        // Vérifier le mot de passe
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) {
             return res.status(400).json({ message: 'Mot de passe incorrect.' });
         }
 
+        // Générer le token
         const token = generateAccessToken({ id: user.id, username: user.username });
         res.json({ token });
     } catch (err) {
@@ -68,12 +78,16 @@ exports.login = async (req, res) => {
 // Mise à jour des informations utilisateur
 exports.updateUser = async (req, res) => {
     const { oldPassword, username, password } = req.body;
-    const user = users.find(u => u.id === req.user.id);
-    if (!user) {
-        return res.status(404).json({ message: 'Utilisateur non trouvé.' });
-    }
+    const userId = req.token.payload.id;
 
     try {
+        // Trouver l'utilisateur
+        const user = await Utilisateurs.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+        }
+
+        // Vérifier l'ancien mot de passe si fourni
         if (oldPassword) {
             const isMatch = await bcrypt.compare(oldPassword, user.password);
             if (!isMatch) {
@@ -81,19 +95,24 @@ exports.updateUser = async (req, res) => {
             }
         }
 
+        // Mettre à jour le nom d'utilisateur si fourni
         if (username) {
-            // Vérifier si le nouveau nom d'utilisateur est déjà pris
-            const existingUser = users.find(u => u.username === username);
+            // Vérifier si le nouvel nom d'utilisateur est déjà pris
+            const existingUser = await Utilisateurs.findOne({ where: { username } });
             if (existingUser && existingUser.id !== user.id) {
                 return res.status(400).json({ message: 'Nom d\'utilisateur déjà pris.' });
             }
             user.username = username;
         }
 
+        // Mettre à jour le mot de passe si fourni
         if (password) {
             const hashedPassword = await bcrypt.hash(password, 10);
             user.password = hashedPassword;
         }
+
+        // Sauvegarder les modifications
+        await user.save();
 
         res.json({ message: 'Utilisateur mis à jour avec succès.' });
     } catch (err) {
@@ -103,14 +122,20 @@ exports.updateUser = async (req, res) => {
 };
 
 // Suppression de l'utilisateur
-exports.deleteUser = (req, res) => {
-    const userIndex = users.findIndex(u => u.id === req.user.id);
+exports.deleteUser = async (req, res) => {
+    const userId = req.token.payload.id;
 
-    if (userIndex === -1) {
-        return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+    try {
+        const user = await Utilisateurs.findByPk(userId);
+        if (!user) {
+            return res.status(404).json({ message: 'Utilisateur non trouvé.' });
+        }
+
+        await user.destroy();
+
+        res.json({ message: 'Utilisateur supprimé avec succès.' });
+    } catch (err) {
+        console.error('Erreur lors de la suppression de l\'utilisateur:', err);
+        res.status(500).json({ message: 'Erreur Interne du Serveur.' });
     }
-
-    users.splice(userIndex, 1);
-
-    return res.json({ message: 'Utilisateur supprimé avec succès.' });
 };
