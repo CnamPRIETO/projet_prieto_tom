@@ -14,12 +14,26 @@ import { CommonModule } from '@angular/common';
 export class RegisterComponent {
   username: string = '';
   password: string = '';
+  firstname: string = '';
+  lastname: string = '';
+  email: string = '';
+  address: string = '';
+  phone: string = '';
+
   errorMessage: string = '';
 
   constructor(private authService: AuthService, private router: Router) {}
 
   onRegister() {
-    this.authService.register(this.username, this.password).subscribe({
+    this.authService.register(
+      this.username,
+      this.password,
+      this.firstname,
+      this.lastname,
+      this.email,
+      this.address,
+      this.phone
+    ).subscribe({
       next: () => this.router.navigate(['/login']),
       error: err => this.errorMessage = err.error.message || 'Erreur lors de l\'inscription.'
     });

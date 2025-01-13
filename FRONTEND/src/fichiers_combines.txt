@@ -933,15 +933,13 @@ export class CatalogueComponent implements OnInit, OnDestroy {
       criteria.prix = this.filtresRecherches.prix;
     }
 
-    // Si aucun critère n'est fourni, utilisez getProduits pour récupérer tous les produits
-    if (Object.keys(criteria).length === 0) {
+    if (Object.keys(criteria).length === 0) { //aucun filtre
       this.subscription = this.apiService.getProduits().subscribe((produits) => {
         this.produitsAvecFiltre = produits;
       });
     } else {
-      // Sinon, utilisez searchProduits avec les critères
       this.subscription = this.apiService.searchProduits(criteria).subscribe((produits) => {
-        this.produitsAvecFiltre = produits;
+        this.produitsAvecFiltre = produits; // avec filtre
       }, (error) => {
         console.error('Erreur lors de la recherche des produits:', error);
         this.produitsAvecFiltre = [];
@@ -1320,8 +1318,8 @@ bootstrapApplication(AppComponent, appConfig)
 ===== ./environments/environments.ts =====
 export const environment = {
     production: false,
-    backendProduit : 'http://localhost:443/api/produits',
-    backendUser : 'http://localhost:443/api'
+    backendProduit : 'https://apiavecbdd.onrender.com/api/produits',
+    backendUser : 'https://apiavecbdd.onrender.com/api'
 };
 
 ===== ./assets/mock/produit.json =====

@@ -1,1 +1,49 @@
+<h2>Modifier mes informations</h2>
+
+<form (ngSubmit)="onUpdateProfile()">
+  <div>
+    <label>Prénom :</label>
+    <input type="text" [(ngModel)]="firstname" name="firstname" />
+  </div>
+  <div>
+    <label>Nom :</label>
+    <input type="text" [(ngModel)]="lastname" name="lastname" />
+  </div>
+  <div>
+    <label>Email :</label>
+    <input type="email" [(ngModel)]="email" name="email" />
+  </div>
+  <div>
+    <label>Adresse :</label>
+    <input type="text" [(ngModel)]="address" name="address" />
+  </div>
+  <div>
+    <label>Téléphone :</label>
+    <input type="text" [(ngModel)]="phone" name="phone" />
+  </div>
+  <div>
+    <label>Nom d'utilisateur :</label>
+    <input type="text" [(ngModel)]="username" name="username" />
+  </div>
+
+  <h3>Changer de mot de passe (optionnel)</h3>
+  <div>
+    <label>Ancien mot de passe :</label>
+    <input type="password" [(ngModel)]="oldPassword" name="oldPassword" />
+  </div>
+  <div>
+    <label>Nouveau mot de passe :</label>
+    <input type="password" [(ngModel)]="newPassword" name="newPassword" />
+  </div>
+  <div>
+    <label>Confirmer le nouveau mot de passe :</label>
+    <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" />
+  </div>
+
+  <button type="submit">Enregistrer</button>
+</form>
+
+<p *ngIf="successMessage" class="success">{{ successMessage }}</p>
+<p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+
 <button (click)="onDeleteAccount()">Supprimer mon compte</button>

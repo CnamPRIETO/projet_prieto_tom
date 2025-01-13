@@ -10,6 +10,9 @@ module.exports = app => {
   
     // Route de connexion
     router.post("/login", auth.login);
+
+    router.get("/user", checkJwt, auth.getProfile);
+
   
     // Route de mise à jour des informations utilisateur
     router.put("/user", checkJwt, auth.updateUser);

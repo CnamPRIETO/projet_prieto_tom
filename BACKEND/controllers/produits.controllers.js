@@ -1,6 +1,6 @@
 const db = require("../models");
 const Produits = db.produits;
-const { Op } = require("sequelize"); // Assurez-vous d'importer Op
+const { Op } = require("sequelize"); 
 
 // Récupérer tous les produits avec filtres optionnels et pagination
 exports.getProduits = async (req, res) => {

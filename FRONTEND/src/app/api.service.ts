@@ -33,9 +33,10 @@ export class ApiService{
     }
 
     // Authentification
-    public register(username: string, password: string): Observable<RegisterResponse> {
-        return this.http.post<RegisterResponse>(`${environment.backendUser}/auth/register`, { username, password });
-    }
+    public register(username: string, password: string,firstname: string,lastname: string,email: string,address: string,phone: string): Observable<RegisterResponse> {
+        return this.http.post<RegisterResponse>(`${environment.backendUser}/auth/register`,{username,password,firstname,lastname,email,address,phone}
+        );
+      }
 
     public login(username: string, password: string): Observable<LoginResponse> {
         return this.http.post<LoginResponse>(`${environment.backendUser}/auth/login`, { username, password });
@@ -49,5 +50,10 @@ export class ApiService{
     public deleteUser(token: string): Observable<RegisterResponse> {
         const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
         return this.http.delete<RegisterResponse>(`${environment.backendUser}/auth/user`, { headers });
+    }
+
+    public getUserProfile(token: string): Observable<User> {
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.get<User>(`${environment.backendUser}/auth/user`, { headers });
     }
 }

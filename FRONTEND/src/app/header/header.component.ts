@@ -21,7 +21,7 @@ export class HeaderComponent implements OnInit {
     private router = inject(Router);
     nbProduitsPanier$!: Observable<number>;
     isLoggedIn$!: Observable<boolean>;
-    username: string = '';
+    firstname: string = '';
 
     constructor() {
         this.nbProduitsPanier$ = this.store.select(PanierState.getNbProduits);
@@ -35,10 +35,10 @@ export class HeaderComponent implements OnInit {
                 if (token) {
                     const helper = new JwtHelperService();
                     const decodedToken = helper.decodeToken(token);
-                    this.username = decodedToken.username;
+                    this.firstname = decodedToken.firstname;
                 }
             } else {
-                this.username = '';
+                this.firstname = '';
             }
         });
     }

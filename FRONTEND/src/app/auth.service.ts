@@ -33,8 +33,8 @@ export class AuthService {
     );
   }
 
-  register(username: string, password: string): Observable<RegisterResponse> {
-    return this.apiService.register(username, password);
+  register(username: string,password: string,firstname: string,lastname: string,email: string,address: string,phone: string): Observable<RegisterResponse> {
+    return this.apiService.register(username, password, firstname, lastname, email, address, phone);
   }
 
   logout(): void {
@@ -62,4 +62,13 @@ export class AuthService {
     }
     return this.apiService.deleteUser(token);
   }
+
+  getUserProfile(): Observable<User> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('No token found');
+    }
+    return this.apiService.getUserProfile(token);
+  }
+  
 }
