@@ -21,12 +21,201 @@
   <a routerLink="/panier">Panier</a>
   <a routerLink="/login">Connexion</a>
   <a routerLink="/register">Inscription</a>
-  <a routerLink="/change-password">Modifier mon mot de passe</a>
   <a routerLink="/profil">Profil</a>
   <a href="#" (click)="logout()">Déconnexion</a>
 </nav>
 <router-outlet></router-outlet>
 <app-footer></app-footer>
+
+===== ./app/card-form/card-form.component.spec.ts =====
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { CardFormComponent } from './card-form.component';
+
+describe('CardFormComponent', () => {
+  let component: CardFormComponent;
+  let fixture: ComponentFixture<CardFormComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CardFormComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(CardFormComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+===== ./app/card-form/card-form.component.ts =====
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { NgIf } from '@angular/common';
+import { CartesService } from '../cartes.service';
+import { Card } from '../models/card.model';
+
+@Component({
+  selector: 'app-card-form',
+  standalone: true,
+  imports: [ReactiveFormsModule, NgIf],
+  templateUrl: './card-form.component.html',
+  styleUrls: ['./card-form.component.css']
+})
+export class CardFormComponent {
+  CardForm: FormGroup;
+
+  constructor(private fb: FormBuilder, private cartesService: CartesService) {
+    this.CardForm = this.fb.group({
+      cardNumber: [
+        '',
+        [Validators.required, Validators.pattern('^[0-9]{16}$')]
+      ],
+      expirationDate: [
+        '',
+        [Validators.required, Validators.pattern('(0[1-9]|1[0-2])/\\d{2}')]
+      ],
+      cvv: [
+        '',
+        [Validators.required, Validators.pattern('^[0-9]{3,4}$')]
+      ],
+      cardHolderName: ['', Validators.required]
+    });
+  }
+
+  onSubmit() {
+    if (this.CardForm.valid) {
+      const cardData: Card = this.CardForm.value;
+      this.cartesService.addCarte(cardData);
+      this.CardForm.reset();
+    } else {
+      this.CardForm.markAllAsTouched();
+      console.log('Formulaire invalide');
+    }
+  }
+}
+
+
+===== ./app/card-form/card-form.component.html =====
+<form [formGroup]="CardForm" (ngSubmit)="onSubmit()">
+    <div>
+      <label for="cardNumber">Numéro de carte :</label>
+      <input id="cardNumber" formControlName="cardNumber" type="text" />
+      <div class="error-message" *ngIf="CardForm.get('cardNumber')?.invalid">
+        Numéro de carte invalide.
+      </div>
+    </div>
+  
+    <div>
+      <label for="expirationDate">Date d'expiration (MM/AA) :</label>
+      <input
+        id="expirationDate"
+        formControlName="expirationDate"
+        type="text"
+        placeholder="MM/AA"
+      />
+      <div class="error-message" *ngIf="CardForm.get('expirationDate')?.invalid">
+        Date d'expiration invalide.
+      </div>
+    </div>
+  
+    <div>
+      <label for="cvv">CVV :</label>
+      <input id="cvv" formControlName="cvv" type="text" />
+      <div class="error-message" *ngIf="CardForm.get('cvv')?.invalid">
+        CVV invalide.
+      </div>
+    </div>
+  
+    <div>
+      <label for="cardHolderName">Nom du titulaire :</label>
+      <input id="cardHolderName" formControlName="cardHolderName" type="text" />
+      <div class="error-message" *ngIf="CardForm.get('cardHolderName')?.invalid">
+        Le nom du titulaire est requis.
+      </div>
+    </div>
+  
+    <button type="submit">Soumettre</button>
+  </form>
+  
+
+===== ./app/list-card/list-card.component.html =====
+<h2 class="text-center">Liste des cartes de crédit</h2>
+<div class="card-list">
+  <div class="card-item" *ngFor="let card of cartes(); let i = index">
+    <div class="card-header">
+      <strong>{{ card.cardHolderName }}</strong>
+      <button class="delete-button" (click)="onRemove(i)">×</button>
+    </div>
+    <div class="card-body">
+      <p>
+        <strong>Numéro de carte :</strong>
+        {{ card.cardNumber | maskCard:4:'•' }}
+      </p>
+      <p><strong>Date d'expiration :</strong> {{ card.expirationDate }}</p>
+      <p><strong>CVV :</strong> {{ card.cvv | maskCard:1:'•' }}</p>
+    </div>
+  </div>
+</div>
+
+
+===== ./app/list-card/list-card.component.ts =====
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { CartesService } from '../cartes.service';
+import { MaskCardPipe } from '../mask-card.pipe';
+
+@Component({
+  selector: 'app-list-card',
+  standalone: true,
+  imports: [CommonModule, MaskCardPipe],
+  templateUrl: './list-card.component.html',
+  styleUrls: ['./list-card.component.css']
+})
+export class ListCardComponent {
+  constructor(private cartesService: CartesService) {}
+
+  // getter sur le signal pour obtenir la liste des cartes
+  get cartes() {
+    return this.cartesService.getCartes();
+  }
+
+  onRemove(index: number) {
+    this.cartesService.delCarte(index);
+  }
+}
+
+
+===== ./app/list-card/list-card.component.spec.ts =====
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { ListCardComponent } from './list-card.component';
+
+describe('ListCardComponent', () => {
+  let component: ListCardComponent;
+  let fixture: ComponentFixture<ListCardComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ListCardComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(ListCardComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
 
 ===== ./app/footer/footer.component.ts =====
 import { Component } from '@angular/core';
@@ -109,9 +298,10 @@ export class ApiService{
     }
 
     // Authentification
-    public register(username: string, password: string): Observable<RegisterResponse> {
-        return this.http.post<RegisterResponse>(`${environment.backendUser}/auth/register`, { username, password });
-    }
+    public register(username: string, password: string,firstname: string,lastname: string,email: string,address: string,phone: string): Observable<RegisterResponse> {
+        return this.http.post<RegisterResponse>(`${environment.backendUser}/auth/register`,{username,password,firstname,lastname,email,address,phone}
+        );
+      }
 
     public login(username: string, password: string): Observable<LoginResponse> {
         return this.http.post<LoginResponse>(`${environment.backendUser}/auth/login`, { username, password });
@@ -125,6 +315,11 @@ export class ApiService{
     public deleteUser(token: string): Observable<RegisterResponse> {
         const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
         return this.http.delete<RegisterResponse>(`${environment.backendUser}/auth/user`, { headers });
+    }
+
+    public getUserProfile(token: string): Observable<User> {
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.get<User>(`${environment.backendUser}/auth/user`, { headers });
     }
 }
 
@@ -165,8 +360,8 @@ export class AuthService {
     );
   }
 
-  register(username: string, password: string): Observable<RegisterResponse> {
-    return this.apiService.register(username, password);
+  register(username: string,password: string,firstname: string,lastname: string,email: string,address: string,phone: string): Observable<RegisterResponse> {
+    return this.apiService.register(username, password, firstname, lastname, email, address, phone);
   }
 
   logout(): void {
@@ -194,6 +389,15 @@ export class AuthService {
     }
     return this.apiService.deleteUser(token);
   }
+
+  getUserProfile(): Observable<User> {
+    const token = this.getToken();
+    if (!token) {
+      throw new Error('No token found');
+    }
+    return this.apiService.getUserProfile(token);
+  }
+  
 }
 
 
@@ -257,7 +461,6 @@ export const routes: Routes = [
     { path: 'profil', component: ProfilComponentComponent, canActivate: [AuthGuard] },
     { path: '**', redirectTo: '', pathMatch: 'full' },
 ];
-
 
 ===== ./app/barre-recherche/barre-recherche.component.html =====
 
@@ -474,10 +677,23 @@ export class Produit {
     stock : number = 0;
 }
 
+===== ./app/models/card.model.ts =====
+export interface Card {
+    cardHolderName: string;
+    cvv: string;
+    expirationDate: string;
+    cardNumber: string;
+  }
+
 ===== ./app/models/user.ts =====
 export class User {
     username?: string;
     password?: string;
+    firstname?: string;
+    lastname?: string;
+    email?: string;
+    address?: string;
+    phone?: string;
 }
 
 ===== ./app/auth.guard.ts =====
@@ -569,10 +785,37 @@ describe('RegisterComponent', () => {
     <label for="username">Nom d'utilisateur :</label>
     <input type="text" id="username" [(ngModel)]="username" name="username" required />
   </div>
+
   <div>
     <label for="password">Mot de passe :</label>
     <input type="password" id="password" [(ngModel)]="password" name="password" required />
   </div>
+
+  <div>
+    <label for="firstname">Prénom :</label>
+    <input type="text" id="firstname" [(ngModel)]="firstname" name="firstname" required />
+  </div>
+
+  <div>
+    <label for="lastname">Nom :</label>
+    <input type="text" id="lastname" [(ngModel)]="lastname" name="lastname" required />
+  </div>
+
+  <div>
+    <label for="email">Email :</label>
+    <input type="email" id="email" [(ngModel)]="email" name="email" required />
+  </div>
+
+  <div>
+    <label for="address">Adresse :</label>
+    <input type="text" id="address" [(ngModel)]="address" name="address" />
+  </div>
+
+  <div>
+    <label for="phone">Téléphone :</label>
+    <input type="text" id="phone" [(ngModel)]="phone" name="phone" />
+  </div>
+
   <button type="submit">S'inscrire</button>
 </form>
 <p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
@@ -595,12 +838,26 @@ import { CommonModule } from '@angular/common';
 export class RegisterComponent {
   username: string = '';
   password: string = '';
+  firstname: string = '';
+  lastname: string = '';
+  email: string = '';
+  address: string = '';
+  phone: string = '';
+
   errorMessage: string = '';
 
   constructor(private authService: AuthService, private router: Router) {}
 
   onRegister() {
-    this.authService.register(this.username, this.password).subscribe({
+    this.authService.register(
+      this.username,
+      this.password,
+      this.firstname,
+      this.lastname,
+      this.email,
+      this.address,
+      this.phone
+    ).subscribe({
       next: () => this.router.navigate(['/login']),
       error: err => this.errorMessage = err.error.message || 'Erreur lors de l\'inscription.'
     });
@@ -645,6 +902,17 @@ export const appConfig: ApplicationConfig = {
 };
 
 
+===== ./app/mask-card.pipe.spec.ts =====
+import { MaskCardPipe } from './mask-card.pipe';
+
+describe('MaskCardPipe', () => {
+  it('create an instance', () => {
+    const pipe = new MaskCardPipe();
+    expect(pipe).toBeTruthy();
+  });
+});
+
+
 ===== ./app/auth.service.spec.ts =====
 import { TestBed } from '@angular/core/testing';
 
@@ -664,20 +932,123 @@ describe('AuthService', () => {
 });
 
 
+===== ./app/cartes.service.ts =====
+import { Injectable, signal } from '@angular/core';
+import { Card } from './models/card.model';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class CartesService {
+  // Signal qui stocke la liste des cartes
+  private cartesSignal = signal<Card[]>([]);
+
+  // Récupération en lecture seule
+  getCartes() {
+    return this.cartesSignal.asReadonly();
+  }
+
+  // Ajout d’une carte
+  addCarte(carte: Card) {
+    this.cartesSignal.update((cartes) => {
+      return [...cartes, carte];
+    });
+  }
+
+  // Suppression d’une carte par index
+  delCarte(index: number) {
+    this.cartesSignal.update((cartes) => {
+      return cartes.filter((_, i) => i !== index);
+    });
+  }
+}
+
+
 ===== ./app/profil-component/profil-component.component.ts =====
-import { Component } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth.service';
 import { Router } from '@angular/router';
 import { RegisterResponse } from '../models/auth-response.interface';
+import { FormsModule } from '@angular/forms';
+import { User } from '../models/user';
 
 @Component({
   selector: 'app-profil-component',
-  imports: [],
+  imports: [FormsModule],
   templateUrl: './profil-component.component.html',
   styleUrl: './profil-component.component.css'
 })
 export class ProfilComponentComponent {
   constructor(private authService: AuthService, private router: Router) {}
+  firstname: string = '';
+  lastname: string = '';
+  email: string = '';
+  address: string = '';
+  phone: string = '';
+  username: string = '';
+  oldPassword: string = '';
+  newPassword: string = '';
+  confirmPassword: string = '';
+  successMessage: string = '';
+  errorMessage: string = '';
+
+  ngOnInit(): void {
+    // Dès le chargement, on récupère les infos du user
+    this.authService.getUserProfile().subscribe({
+      next: (user: User) => {
+        // On pré-remplit les variables
+        this.firstname = user.firstname || '';
+        this.lastname = user.lastname || '';
+        this.email = user.email || '';
+        this.address = user.address || '';
+        this.phone = user.phone || '';
+        this.username = user.username || '';
+      },
+      error: (err) => {
+        console.error('Erreur lors de la récupération du profil :', err);
+      }
+    });
+  }
+
+  onUpdateProfile() {
+    if (this.newPassword && (this.newPassword !== this.confirmPassword)) {
+      this.errorMessage = 'Les mots de passe ne correspondent pas.';
+      this.successMessage = '';
+      return;
+    }
+
+    const userData: any = {
+      firstname: this.firstname,
+      lastname: this.lastname,
+      email: this.email,
+      address: this.address,
+      phone: this.phone,
+      username: this.username,
+    };
+
+    if (this.oldPassword) {
+      userData.oldPassword = this.oldPassword;
+    }
+    if (this.newPassword) {
+      userData.password = this.newPassword;
+    }
+
+    this.authService.updateUser(userData).subscribe({
+      next: (res) => {
+        this.successMessage = res.message;
+        this.errorMessage = '';
+        this.oldPassword = '';
+        this.newPassword = '';
+        this.confirmPassword = '';
+      },
+      error: (err) => {
+        this.errorMessage = err.error?.message || 'Erreur lors de la mise à jour.';
+        this.successMessage = '';
+      }
+    });
+  }
+
+
 
   onDeleteAccount() {
     // Petite confirmation
@@ -724,7 +1095,86 @@ describe('ProfilComponentComponent', () => {
 
 
 ===== ./app/profil-component/profil-component.component.html =====
+<h2>Modifier mes informations</h2>
+
+<form (ngSubmit)="onUpdateProfile()">
+  <div>
+    <label>Prénom :</label>
+    <input type="text" [(ngModel)]="firstname" name="firstname" />
+  </div>
+  <div>
+    <label>Nom :</label>
+    <input type="text" [(ngModel)]="lastname" name="lastname" />
+  </div>
+  <div>
+    <label>Email :</label>
+    <input type="email" [(ngModel)]="email" name="email" />
+  </div>
+  <div>
+    <label>Adresse :</label>
+    <input type="text" [(ngModel)]="address" name="address" />
+  </div>
+  <div>
+    <label>Téléphone :</label>
+    <input type="text" [(ngModel)]="phone" name="phone" />
+  </div>
+  <div>
+    <label>Nom d'utilisateur :</label>
+    <input type="text" [(ngModel)]="username" name="username" />
+  </div>
+
+  <h3>Changer de mot de passe (optionnel)</h3>
+  <div>
+    <label>Ancien mot de passe :</label>
+    <input type="password" [(ngModel)]="oldPassword" name="oldPassword" />
+  </div>
+  <div>
+    <label>Nouveau mot de passe :</label>
+    <input type="password" [(ngModel)]="newPassword" name="newPassword" />
+  </div>
+  <div>
+    <label>Confirmer le nouveau mot de passe :</label>
+    <input type="password" [(ngModel)]="confirmPassword" name="confirmPassword" />
+  </div>
+
+  <button type="submit">Enregistrer</button>
+</form>
+
+<p *ngIf="successMessage" class="success">{{ successMessage }}</p>
+<p *ngIf="errorMessage" class="error">{{ errorMessage }}</p>
+
 <button (click)="onDeleteAccount()">Supprimer mon compte</button>
+
+
+===== ./app/mask-card.pipe.ts =====
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({
+  name: 'maskCard',
+  standalone: true
+})
+export class MaskCardPipe implements PipeTransform {
+  transform(
+    value: string,
+    visibleChars: number = 4,
+    maskChar: string = '•'
+  ): string {
+    if (!value) {
+      return '';
+    }
+
+    const length = value.length;
+    if (length <= visibleChars) {
+      return value.replace(/./g, maskChar);
+    }
+
+    const maskedSection = value.slice(0, -visibleChars).replace(/./g, maskChar);
+    const visibleSection = value.slice(-visibleChars);
+
+    return maskedSection + visibleSection;
+  }
+}
+
 
 ===== ./app/panier/panier.component.html =====
 <h2 class="panier-titre">Mon Panier</h2>
@@ -740,6 +1190,17 @@ describe('ProfilComponentComponent', () => {
   <strong>Total des articles :</strong> {{ totalProduits$ | async }} 
   <strong>Total : </strong>{{ totalPrix$ | async }} $
 </div>
+<button 
+  class="btn-payer" 
+  [disabled]="(totalProduits$ | async) === 0"
+  (click)="onPayer()"
+>
+  Payer
+</button>
+
+<app-card-form *ngIf="afficherFormulaire"></app-card-form>
+<app-list-card *ngIf="afficherFormulaire"></app-list-card>
+
 
 <a routerLink="/" class="home-link">Retour à l'accueil</a>
 
@@ -772,46 +1233,45 @@ describe('PanierComponent', () => {
 
 ===== ./app/panier/panier.component.ts =====
 import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Store } from '@ngxs/store';
 import { PanierState } from '../shared/states/panier-state';
 import { DelProduitDuPanier } from '../shared/actions/panier-action';
 import { Produit } from '../models/produit';
 import { Observable } from 'rxjs';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { CardFormComponent } from '../card-form/card-form.component';
+import { ListCardComponent } from '../list-card/list-card.component';
 
 @Component({
   selector: 'app-panier',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, CardFormComponent, ListCardComponent],
   templateUrl: './panier.component.html',
   styleUrls: ['./panier.component.css']
 })
-
-
 export class PanierComponent {
   private store = inject(Store);
-
   produitsPanier$!: Observable<Produit[]>;
   totalProduits$!: Observable<number>;
   totalPrix$!: Observable<number>;
 
-  constructor() {
+  afficherFormulaire = false;
 
+  constructor() {
     this.produitsPanier$ = this.store.select(PanierState.getProduitsPanier);
     this.totalProduits$ = this.store.select(PanierState.getNbProduits);
     this.totalPrix$ = this.store.select(PanierState.getTotalPrix);
-
   }
 
   delFromPanier(produit: Produit) {
-    console.log('PanierComponent: Dispatching DelProduitDuPanier', produit);
     this.store.dispatch(new DelProduitDuPanier(produit));
   }
+
+  onPayer() {
+    this.afficherFormulaire = true;
+  }
 }
-
-
-
 
 
 ===== ./app/liste-produits/liste-produits.component.ts =====
@@ -1188,7 +1648,7 @@ export class LoginComponent {
     TP06 Tom PRIETO
     <div *ngIf="isLoggedIn$ | async">
         Articles dans le panier : {{ nbProduitsPanier$ | async }}
-        <span> | Connecté en tant que {{ username }}</span>
+        <span> | Connecté en tant que {{ firstname }}</span>
     </div>
 </header>
 
@@ -1242,7 +1702,7 @@ export class HeaderComponent implements OnInit {
     private router = inject(Router);
     nbProduitsPanier$!: Observable<number>;
     isLoggedIn$!: Observable<boolean>;
-    username: string = '';
+    firstname: string = '';
 
     constructor() {
         this.nbProduitsPanier$ = this.store.select(PanierState.getNbProduits);
@@ -1256,10 +1716,10 @@ export class HeaderComponent implements OnInit {
                 if (token) {
                     const helper = new JwtHelperService();
                     const decodedToken = helper.decodeToken(token);
-                    this.username = decodedToken.username;
+                    this.firstname = decodedToken.firstname;
                 }
             } else {
-                this.username = '';
+                this.firstname = '';
             }
         });
     }
@@ -1321,6 +1781,13 @@ export const environment = {
     backendProduit : 'https://apiavecbdd.onrender.com/api/produits',
     backendUser : 'https://apiavecbdd.onrender.com/api'
 };
+
+
+// export const environment = {
+//     production: false,
+//     backendProduit : 'http://localhost:443/api/produits',
+//     backendUser : 'http://localhost:443/api'
+// };
 
 ===== ./assets/mock/produit.json =====
 [

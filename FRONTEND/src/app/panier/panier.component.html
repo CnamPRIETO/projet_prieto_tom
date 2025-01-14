@@ -11,5 +11,16 @@
   <strong>Total des articles :</strong> {{ totalProduits$ | async }} 
   <strong>Total : </strong>{{ totalPrix$ | async }} $
 </div>
+<button 
+  class="btn-payer" 
+  [disabled]="(totalProduits$ | async) === 0"
+  (click)="onPayer()"
+>
+  Payer
+</button>
+
+<app-card-form *ngIf="afficherFormulaire"></app-card-form>
+<app-list-card *ngIf="afficherFormulaire"></app-list-card>
+
 
 <a routerLink="/" class="home-link">Retour à l'accueil</a>

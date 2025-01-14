@@ -1,41 +1,40 @@
 import { Component, inject } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { Store } from '@ngxs/store';
 import { PanierState } from '../shared/states/panier-state';
 import { DelProduitDuPanier } from '../shared/actions/panier-action';
 import { Produit } from '../models/produit';
 import { Observable } from 'rxjs';
-import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { CardFormComponent } from '../card-form/card-form.component';
+import { ListCardComponent } from '../list-card/list-card.component';
 
 @Component({
   selector: 'app-panier',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, CardFormComponent, ListCardComponent],
   templateUrl: './panier.component.html',
   styleUrls: ['./panier.component.css']
 })
-
-
 export class PanierComponent {
   private store = inject(Store);
-
   produitsPanier$!: Observable<Produit[]>;
   totalProduits$!: Observable<number>;
   totalPrix$!: Observable<number>;
 
-  constructor() {
+  afficherFormulaire = false;
 
+  constructor() {
     this.produitsPanier$ = this.store.select(PanierState.getProduitsPanier);
     this.totalProduits$ = this.store.select(PanierState.getNbProduits);
     this.totalPrix$ = this.store.select(PanierState.getTotalPrix);
-
   }
 
   delFromPanier(produit: Produit) {
-    console.log('PanierComponent: Dispatching DelProduitDuPanier', produit);
     this.store.dispatch(new DelProduitDuPanier(produit));
   }
+
+  onPayer() {
+    this.afficherFormulaire = true;
+  }
 }
-
-
-

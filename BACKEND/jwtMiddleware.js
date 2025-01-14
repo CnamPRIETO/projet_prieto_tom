@@ -1,4 +1,3 @@
-// ./routes/jwtMiddleware.js
 const jwt = require('jsonwebtoken');
 const { ACCESS_TOKEN_SECRET } = require("../config.js");
 
