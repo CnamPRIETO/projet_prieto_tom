@@ -22,13 +22,6 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(
       NgxsModule.forRoot([PanierState]),
       NgxsReduxDevtoolsPluginModule.forRoot(),
-      JwtModule.forRoot({
-        config: {
-          tokenGetter: () => localStorage.getItem('authToken'),
-          allowedDomains: ['localhost:3000'],
-          disallowedRoutes: ['http://localhost:3001/api/auth/login', 'http://localhost:3001/api/auth/register'],
-        }
-      })
     )
   ]
 };

@@ -9,14 +9,10 @@ import { User } from './models/user';
   providedIn: 'root'
 })
 export class AuthService {
-  private tokenKey = 'authToken';
-  private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
+  private authToken: string | null = null;
+  private loggedIn = new BehaviorSubject<boolean>(false);
 
   constructor(private apiService: ApiService) {}
-
-  private hasToken(): boolean {
-    return !!localStorage.getItem(this.tokenKey);
-  }
 
   get isLoggedIn(): Observable<boolean> {
     return this.loggedIn.asObservable();
@@ -26,24 +22,24 @@ export class AuthService {
     return this.apiService.login(username, password).pipe(
       tap((response: LoginResponse) => {
         if (response.token) {
-          localStorage.setItem(this.tokenKey, response.token);
+          this.authToken = response.token;
           this.loggedIn.next(true);
         }
       })
     );
   }
 
-  register(username: string,password: string,firstname: string,lastname: string,email: string,address: string,phone: string): Observable<RegisterResponse> {
+  register(username: string, password: string, firstname: string, lastname: string, email: string, address: string, phone: string): Observable<RegisterResponse> {
     return this.apiService.register(username, password, firstname, lastname, email, address, phone);
   }
 
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
+    this.authToken = null;
     this.loggedIn.next(false);
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    return this.authToken;
   }
 
   updateUser(userData: User): Observable<UpdateUserResponse> {
@@ -56,7 +52,7 @@ export class AuthService {
   }
 
   deleteAccount(): Observable<RegisterResponse> {
-    const token = this.getToken(); // lit le token depuis le localStorage
+    const token = this.getToken();
     if (!token) {
       throw new Error('No token found');
     }
@@ -70,5 +66,4 @@ export class AuthService {
     }
     return this.apiService.getUserProfile(token);
   }
-  
 }

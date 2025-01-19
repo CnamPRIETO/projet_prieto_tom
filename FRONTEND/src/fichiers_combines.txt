@@ -56,14 +56,14 @@ describe('CardFormComponent', () => {
 ===== ./app/card-form/card-form.component.ts =====
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { NgIf } from '@angular/common';
+import { NgIf, NgClass } from '@angular/common';
 import { CartesService } from '../cartes.service';
 import { Card } from '../models/card.model';
 
 @Component({
   selector: 'app-card-form',
   standalone: true,
-  imports: [ReactiveFormsModule, NgIf],
+  imports: [ReactiveFormsModule, NgIf, NgClass],
   templateUrl: './card-form.component.html',
   styleUrls: ['./card-form.component.css']
 })
@@ -105,7 +105,7 @@ export class CardFormComponent {
 <form [formGroup]="CardForm" (ngSubmit)="onSubmit()">
     <div>
       <label for="cardNumber">Numéro de carte :</label>
-      <input id="cardNumber" formControlName="cardNumber" type="text" />
+      <input id="cardNumber" formControlName="cardNumber" type="text" [ngClass]="{'is-invalid': CardForm.get('cardNumber')?.invalid }"/>
       <div class="error-message" *ngIf="CardForm.get('cardNumber')?.invalid">
         Numéro de carte invalide.
       </div>
@@ -118,6 +118,7 @@ export class CardFormComponent {
         formControlName="expirationDate"
         type="text"
         placeholder="MM/AA"
+        [ngClass]="{'is-invalid': CardForm.get('expirationDate')?.invalid}"
       />
       <div class="error-message" *ngIf="CardForm.get('expirationDate')?.invalid">
         Date d'expiration invalide.
@@ -126,7 +127,7 @@ export class CardFormComponent {
   
     <div>
       <label for="cvv">CVV :</label>
-      <input id="cvv" formControlName="cvv" type="text" />
+      <input id="cvv" formControlName="cvv" type="text" [ngClass]="{'is-invalid': CardForm.get('cvv')?.invalid}"/>
       <div class="error-message" *ngIf="CardForm.get('cvv')?.invalid">
         CVV invalide.
       </div>
@@ -134,7 +135,7 @@ export class CardFormComponent {
   
     <div>
       <label for="cardHolderName">Nom du titulaire :</label>
-      <input id="cardHolderName" formControlName="cardHolderName" type="text" />
+      <input id="cardHolderName" formControlName="cardHolderName" type="text" [ngClass]="{'is-invalid': CardForm.get('cardHolderName')?.invalid}"/>
       <div class="error-message" *ngIf="CardForm.get('cardHolderName')?.invalid">
         Le nom du titulaire est requis.
       </div>
@@ -336,14 +337,10 @@ import { User } from './models/user';
   providedIn: 'root'
 })
 export class AuthService {
-  private tokenKey = 'authToken';
-  private loggedIn = new BehaviorSubject<boolean>(this.hasToken());
+  private authToken: string | null = null;
+  private loggedIn = new BehaviorSubject<boolean>(false);
 
   constructor(private apiService: ApiService) {}
-
-  private hasToken(): boolean {
-    return !!localStorage.getItem(this.tokenKey);
-  }
 
   get isLoggedIn(): Observable<boolean> {
     return this.loggedIn.asObservable();
@@ -353,24 +350,24 @@ export class AuthService {
     return this.apiService.login(username, password).pipe(
       tap((response: LoginResponse) => {
         if (response.token) {
-          localStorage.setItem(this.tokenKey, response.token);
+          this.authToken = response.token;
           this.loggedIn.next(true);
         }
       })
     );
   }
 
-  register(username: string,password: string,firstname: string,lastname: string,email: string,address: string,phone: string): Observable<RegisterResponse> {
+  register(username: string, password: string, firstname: string, lastname: string, email: string, address: string, phone: string): Observable<RegisterResponse> {
     return this.apiService.register(username, password, firstname, lastname, email, address, phone);
   }
 
   logout(): void {
-    localStorage.removeItem(this.tokenKey);
+    this.authToken = null;
     this.loggedIn.next(false);
   }
 
   getToken(): string | null {
-    return localStorage.getItem(this.tokenKey);
+    return this.authToken;
   }
 
   updateUser(userData: User): Observable<UpdateUserResponse> {
@@ -383,7 +380,7 @@ export class AuthService {
   }
 
   deleteAccount(): Observable<RegisterResponse> {
-    const token = this.getToken(); // lit le token depuis le localStorage
+    const token = this.getToken();
     if (!token) {
       throw new Error('No token found');
     }
@@ -397,7 +394,6 @@ export class AuthService {
     }
     return this.apiService.getUserProfile(token);
   }
-  
 }
 
 
@@ -890,13 +886,6 @@ export const appConfig: ApplicationConfig = {
     importProvidersFrom(
       NgxsModule.forRoot([PanierState]),
       NgxsReduxDevtoolsPluginModule.forRoot(),
-      JwtModule.forRoot({
-        config: {
-          tokenGetter: () => localStorage.getItem('authToken'),
-          allowedDomains: ['localhost:3000'],
-          disallowedRoutes: ['http://localhost:3001/api/auth/login', 'http://localhost:3001/api/auth/register'],
-        }
-      })
     )
   ]
 };

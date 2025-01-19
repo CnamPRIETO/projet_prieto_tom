@@ -4,10 +4,11 @@ import { Router } from '@angular/router';
 import { RegisterResponse } from '../models/auth-response.interface';
 import { FormsModule } from '@angular/forms';
 import { User } from '../models/user';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-profil-component',
-  imports: [FormsModule],
+  imports: [FormsModule, NgIf],
   templateUrl: './profil-component.component.html',
   styleUrl: './profil-component.component.css'
 })
