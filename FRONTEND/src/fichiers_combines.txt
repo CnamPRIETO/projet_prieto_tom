@@ -27,197 +27,6 @@
 <router-outlet></router-outlet>
 <app-footer></app-footer>
 
-===== ./app/card-form/card-form.component.spec.ts =====
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { CardFormComponent } from './card-form.component';
-
-describe('CardFormComponent', () => {
-  let component: CardFormComponent;
-  let fixture: ComponentFixture<CardFormComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [CardFormComponent]
-    })
-    .compileComponents();
-
-    fixture = TestBed.createComponent(CardFormComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
-
-
-===== ./app/card-form/card-form.component.ts =====
-import { Component } from '@angular/core';
-import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { NgIf, NgClass } from '@angular/common';
-import { CartesService } from '../cartes.service';
-import { Card } from '../models/card.model';
-
-@Component({
-  selector: 'app-card-form',
-  standalone: true,
-  imports: [ReactiveFormsModule, NgIf, NgClass],
-  templateUrl: './card-form.component.html',
-  styleUrls: ['./card-form.component.css']
-})
-export class CardFormComponent {
-  CardForm: FormGroup;
-
-  constructor(private fb: FormBuilder, private cartesService: CartesService) {
-    this.CardForm = this.fb.group({
-      cardNumber: [
-        '',
-        [Validators.required, Validators.pattern('^[0-9]{16}$')]
-      ],
-      expirationDate: [
-        '',
-        [Validators.required, Validators.pattern('(0[1-9]|1[0-2])/\\d{2}')]
-      ],
-      cvv: [
-        '',
-        [Validators.required, Validators.pattern('^[0-9]{3,4}$')]
-      ],
-      cardHolderName: ['', Validators.required]
-    });
-  }
-
-  onSubmit() {
-    if (this.CardForm.valid) {
-      const cardData: Card = this.CardForm.value;
-      this.cartesService.addCarte(cardData);
-      this.CardForm.reset();
-    } else {
-      this.CardForm.markAllAsTouched();
-      console.log('Formulaire invalide');
-    }
-  }
-}
-
-
-===== ./app/card-form/card-form.component.html =====
-<form [formGroup]="CardForm" (ngSubmit)="onSubmit()">
-    <div>
-      <label for="cardNumber">Numéro de carte :</label>
-      <input id="cardNumber" formControlName="cardNumber" type="text" [ngClass]="{'is-invalid': CardForm.get('cardNumber')?.invalid }"/>
-      <div class="error-message" *ngIf="CardForm.get('cardNumber')?.invalid">
-        Numéro de carte invalide.
-      </div>
-    </div>
-  
-    <div>
-      <label for="expirationDate">Date d'expiration (MM/AA) :</label>
-      <input
-        id="expirationDate"
-        formControlName="expirationDate"
-        type="text"
-        placeholder="MM/AA"
-        [ngClass]="{'is-invalid': CardForm.get('expirationDate')?.invalid}"
-      />
-      <div class="error-message" *ngIf="CardForm.get('expirationDate')?.invalid">
-        Date d'expiration invalide.
-      </div>
-    </div>
-  
-    <div>
-      <label for="cvv">CVV :</label>
-      <input id="cvv" formControlName="cvv" type="text" [ngClass]="{'is-invalid': CardForm.get('cvv')?.invalid}"/>
-      <div class="error-message" *ngIf="CardForm.get('cvv')?.invalid">
-        CVV invalide.
-      </div>
-    </div>
-  
-    <div>
-      <label for="cardHolderName">Nom du titulaire :</label>
-      <input id="cardHolderName" formControlName="cardHolderName" type="text" [ngClass]="{'is-invalid': CardForm.get('cardHolderName')?.invalid}"/>
-      <div class="error-message" *ngIf="CardForm.get('cardHolderName')?.invalid">
-        Le nom du titulaire est requis.
-      </div>
-    </div>
-  
-    <button type="submit">Soumettre</button>
-  </form>
-  
-
-===== ./app/list-card/list-card.component.html =====
-<h2 class="text-center">Liste des cartes de crédit</h2>
-<div class="card-list">
-  <div class="card-item" *ngFor="let card of cartes(); let i = index">
-    <div class="card-header">
-      <strong>{{ card.cardHolderName }}</strong>
-      <button class="delete-button" (click)="onRemove(i)">×</button>
-    </div>
-    <div class="card-body">
-      <p>
-        <strong>Numéro de carte :</strong>
-        {{ card.cardNumber | maskCard:4:'•' }}
-      </p>
-      <p><strong>Date d'expiration :</strong> {{ card.expirationDate }}</p>
-      <p><strong>CVV :</strong> {{ card.cvv | maskCard:1:'•' }}</p>
-    </div>
-  </div>
-</div>
-
-
-===== ./app/list-card/list-card.component.ts =====
-import { Component } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { CartesService } from '../cartes.service';
-import { MaskCardPipe } from '../mask-card.pipe';
-
-@Component({
-  selector: 'app-list-card',
-  standalone: true,
-  imports: [CommonModule, MaskCardPipe],
-  templateUrl: './list-card.component.html',
-  styleUrls: ['./list-card.component.css']
-})
-export class ListCardComponent {
-  constructor(private cartesService: CartesService) {}
-
-  // getter sur le signal pour obtenir la liste des cartes
-  get cartes() {
-    return this.cartesService.getCartes();
-  }
-
-  onRemove(index: number) {
-    this.cartesService.delCarte(index);
-  }
-}
-
-
-===== ./app/list-card/list-card.component.spec.ts =====
-import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { ListCardComponent } from './list-card.component';
-
-describe('ListCardComponent', () => {
-  let component: ListCardComponent;
-  let fixture: ComponentFixture<ListCardComponent>;
-
-  beforeEach(async () => {
-    await TestBed.configureTestingModule({
-      imports: [ListCardComponent]
-    })
-    .compileComponents();
-
-    fixture = TestBed.createComponent(ListCardComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
-
-  it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
-
-
 ===== ./app/footer/footer.component.ts =====
 import { Component } from '@angular/core';
 
@@ -322,6 +131,303 @@ export class ApiService{
         const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
         return this.http.get<User>(`${environment.backendUser}/auth/user`, { headers });
     }
+}
+
+
+===== ./app/card/list-card.component.html =====
+<h2 class="text-center">Liste des cartes de crédit</h2>
+<div class="card-list">
+  <div class="card-item" *ngFor="let card of cartes(); let i = index">
+    <div class="card-header">
+      <strong>{{ card.cardHolderName }}</strong>
+      <button class="delete-button" (click)="onRemove(i)">×</button>
+    </div>
+    <div class="card-body">
+      <p>
+        <strong>Numéro de carte :</strong>
+        {{ card.cardNumber | maskCard:4:'•' }}
+      </p>
+      <p><strong>Date d'expiration :</strong> {{ card.expirationDate }}</p>
+      <p><strong>CVV :</strong> {{ card.cvv | maskCard:1:'•' }}</p>
+    </div>
+  </div>
+</div>
+
+
+===== ./app/card/card-form.component.spec.ts =====
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { CardFormComponent } from './card-form.component';
+
+describe('CardFormComponent', () => {
+  let component: CardFormComponent;
+  let fixture: ComponentFixture<CardFormComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CardFormComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(CardFormComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+===== ./app/card/card-form.component.ts =====
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
+import { NgIf, NgClass } from '@angular/common';
+import { CartesService } from './cartes.service';
+import { Card } from '../models/card.model';
+
+@Component({
+  selector: 'app-card-form',
+//  imports: [ReactiveFormsModule, NgIf, NgClass],
+  templateUrl: './card-form.component.html',
+  styleUrls: ['./card-form.component.css']
+})
+export class CardFormComponent {
+  CardForm: FormGroup;
+
+  constructor(private fb: FormBuilder, private cartesService: CartesService) {
+    this.CardForm = this.fb.group({
+      cardNumber: [
+        '',
+        [Validators.required, Validators.pattern('^[0-9]{16}$')]
+      ],
+      expirationDate: [
+        '',
+        [Validators.required, Validators.pattern('(0[1-9]|1[0-2])/\\d{2}')]
+      ],
+      cvv: [
+        '',
+        [Validators.required, Validators.pattern('^[0-9]{3,4}$')]
+      ],
+      cardHolderName: ['', Validators.required]
+    });
+  }
+
+  onSubmit() {
+    if (this.CardForm.valid) {
+      const cardData: Card = this.CardForm.value;
+      this.cartesService.addCarte(cardData);
+      this.CardForm.reset();
+    } else {
+      this.CardForm.markAllAsTouched();
+      console.log('Formulaire invalide');
+    }
+  }
+}
+
+
+===== ./app/card/list-card.component.ts =====
+import { Component } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { CartesService } from './cartes.service';
+import { MaskCardPipe } from './mask-card.pipe';
+
+@Component({
+  selector: 'app-list-card',
+//  imports: [CommonModule, MaskCardPipe],
+  templateUrl: './list-card.component.html',
+  styleUrls: ['./list-card.component.css']
+})
+export class ListCardComponent {
+  constructor(private cartesService: CartesService) {}
+
+  // getter sur le signal pour obtenir la liste des cartes
+  get cartes() {
+    return this.cartesService.getCartes();
+  }
+
+  onRemove(index: number) {
+    this.cartesService.delCarte(index);
+  }
+}
+
+
+===== ./app/card/card-form.component.html =====
+<form [formGroup]="CardForm" (ngSubmit)="onSubmit()">
+    <div>
+      <label for="cardNumber">Numéro de carte :</label>
+      <input id="cardNumber" formControlName="cardNumber" type="text" [ngClass]="{'is-invalid': CardForm.get('cardNumber')?.invalid }"/>
+      <div class="error-message" *ngIf="CardForm.get('cardNumber')?.invalid">
+        Numéro de carte invalide.
+      </div>
+    </div>
+  
+    <div>
+      <label for="expirationDate">Date d'expiration (MM/AA) :</label>
+      <input
+        id="expirationDate"
+        formControlName="expirationDate"
+        type="text"
+        placeholder="MM/AA"
+        [ngClass]="{'is-invalid': CardForm.get('expirationDate')?.invalid}"
+      />
+      <div class="error-message" *ngIf="CardForm.get('expirationDate')?.invalid">
+        Date d'expiration invalide.
+      </div>
+    </div>
+  
+    <div>
+      <label for="cvv">CVV :</label>
+      <input id="cvv" formControlName="cvv" type="text" [ngClass]="{'is-invalid': CardForm.get('cvv')?.invalid}"/>
+      <div class="error-message" *ngIf="CardForm.get('cvv')?.invalid">
+        CVV invalide.
+      </div>
+    </div>
+  
+    <div>
+      <label for="cardHolderName">Nom du titulaire :</label>
+      <input id="cardHolderName" formControlName="cardHolderName" type="text" [ngClass]="{'is-invalid': CardForm.get('cardHolderName')?.invalid}"/>
+      <div class="error-message" *ngIf="CardForm.get('cardHolderName')?.invalid">
+        Le nom du titulaire est requis.
+      </div>
+    </div>
+  
+    <button type="submit">Soumettre</button>
+  </form>
+  
+
+===== ./app/card/card.module.ts =====
+import { NgModule } from '@angular/core';
+import { CommonModule } from '@angular/common';
+
+import { CardFormComponent } from './card-form.component';
+import { ListCardComponent } from './list-card.component';
+import { MaskCardPipe } from './mask-card.pipe';
+
+// Si vous voulez mettre CartesService dans providers du module (optionnel si déjà providedIn: 'root'):
+import { CartesService } from './cartes.service';
+
+@NgModule({
+  declarations: [
+    CardFormComponent,
+    ListCardComponent,
+    MaskCardPipe
+  ],
+  imports: [
+    CommonModule,
+    // Vous aurez certainement besoin de ReactiveFormsModule si vous l'utilisez dans CardFormComponent
+    // N'oubliez pas de l'importer :
+    // import { ReactiveFormsModule } from '@angular/forms';
+    // ...
+  ],
+  providers: [
+    // CartesService // <-- seulement si vous ne voulez plus le "providedIn: 'root'"
+  ],
+  exports: [
+    CardFormComponent,
+    ListCardComponent,
+    MaskCardPipe
+  ]
+})
+export class CardModule { }
+
+
+===== ./app/card/list-card.component.spec.ts =====
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { ListCardComponent } from './list-card.component';
+
+describe('ListCardComponent', () => {
+  let component: ListCardComponent;
+  let fixture: ComponentFixture<ListCardComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [ListCardComponent]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(ListCardComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+
+===== ./app/card/mask-card.pipe.spec.ts =====
+import { MaskCardPipe } from '../mask-card.pipe';
+
+describe('MaskCardPipe', () => {
+  it('create an instance', () => {
+    const pipe = new MaskCardPipe();
+    expect(pipe).toBeTruthy();
+  });
+});
+
+
+===== ./app/card/cartes.service.ts =====
+import { Injectable, signal } from '@angular/core';
+import { Card } from '../models/card.model';
+
+@Injectable({
+  providedIn: 'root',
+})
+export class CartesService {
+  // Signal qui stocke la liste des cartes
+  private cartesSignal = signal<Card[]>([]);
+
+  // Récupération en lecture seule
+  getCartes() {
+    return this.cartesSignal.asReadonly();
+  }
+
+  // Ajout d’une carte
+  addCarte(carte: Card) {
+    this.cartesSignal.update((cartes) => {
+      return [...cartes, carte];
+    });
+  }
+
+  // Suppression d’une carte par index
+  delCarte(index: number) {
+    this.cartesSignal.update((cartes) => {
+      return cartes.filter((_, i) => i !== index);
+    });
+  }
+}
+
+
+===== ./app/card/mask-card.pipe.ts =====
+import { Pipe, PipeTransform } from '@angular/core';
+
+@Pipe({
+  name: 'maskCard',
+})
+export class MaskCardPipe implements PipeTransform {
+  transform(
+    value: string,
+    visibleChars: number = 4,
+    maskChar: string = '•'
+  ): string {
+    if (!value) {
+      return '';
+    }
+
+    const length = value.length;
+    if (length <= visibleChars) {
+      return value.replace(/./g, maskChar);
+    }
+
+    const maskedSection = value.slice(0, -visibleChars).replace(/./g, maskChar);
+    const visibleSection = value.slice(-visibleChars);
+
+    return maskedSection + visibleSection;
+  }
 }
 
 
@@ -891,17 +997,6 @@ export const appConfig: ApplicationConfig = {
 };
 
 
-===== ./app/mask-card.pipe.spec.ts =====
-import { MaskCardPipe } from './mask-card.pipe';
-
-describe('MaskCardPipe', () => {
-  it('create an instance', () => {
-    const pipe = new MaskCardPipe();
-    expect(pipe).toBeTruthy();
-  });
-});
-
-
 ===== ./app/auth.service.spec.ts =====
 import { TestBed } from '@angular/core/testing';
 
@@ -921,38 +1016,6 @@ describe('AuthService', () => {
 });
 
 
-===== ./app/cartes.service.ts =====
-import { Injectable, signal } from '@angular/core';
-import { Card } from './models/card.model';
-
-@Injectable({
-  providedIn: 'root',
-})
-export class CartesService {
-  // Signal qui stocke la liste des cartes
-  private cartesSignal = signal<Card[]>([]);
-
-  // Récupération en lecture seule
-  getCartes() {
-    return this.cartesSignal.asReadonly();
-  }
-
-  // Ajout d’une carte
-  addCarte(carte: Card) {
-    this.cartesSignal.update((cartes) => {
-      return [...cartes, carte];
-    });
-  }
-
-  // Suppression d’une carte par index
-  delCarte(index: number) {
-    this.cartesSignal.update((cartes) => {
-      return cartes.filter((_, i) => i !== index);
-    });
-  }
-}
-
-
 ===== ./app/profil-component/profil-component.component.ts =====
 import { Component, OnInit } from '@angular/core';
 import { AuthService } from '../auth.service';
@@ -960,10 +1023,11 @@ import { Router } from '@angular/router';
 import { RegisterResponse } from '../models/auth-response.interface';
 import { FormsModule } from '@angular/forms';
 import { User } from '../models/user';
+import { NgIf } from '@angular/common';
 
 @Component({
   selector: 'app-profil-component',
-  imports: [FormsModule],
+  imports: [FormsModule, NgIf],
   templateUrl: './profil-component.component.html',
   styleUrl: './profil-component.component.css'
 })
@@ -1135,36 +1199,6 @@ describe('ProfilComponentComponent', () => {
 <button (click)="onDeleteAccount()">Supprimer mon compte</button>
 
 
-===== ./app/mask-card.pipe.ts =====
-import { Pipe, PipeTransform } from '@angular/core';
-
-@Pipe({
-  name: 'maskCard',
-  standalone: true
-})
-export class MaskCardPipe implements PipeTransform {
-  transform(
-    value: string,
-    visibleChars: number = 4,
-    maskChar: string = '•'
-  ): string {
-    if (!value) {
-      return '';
-    }
-
-    const length = value.length;
-    if (length <= visibleChars) {
-      return value.replace(/./g, maskChar);
-    }
-
-    const maskedSection = value.slice(0, -visibleChars).replace(/./g, maskChar);
-    const visibleSection = value.slice(-visibleChars);
-
-    return maskedSection + visibleSection;
-  }
-}
-
-
 ===== ./app/panier/panier.component.html =====
 <h2 class="panier-titre">Mon Panier</h2>
 <div class="produit-panier" *ngFor="let p of produitsPanier$ | async">
@@ -1229,13 +1263,13 @@ import { DelProduitDuPanier } from '../shared/actions/panier-action';
 import { Produit } from '../models/produit';
 import { Observable } from 'rxjs';
 import { RouterLink } from '@angular/router';
-import { CardFormComponent } from '../card-form/card-form.component';
-import { ListCardComponent } from '../list-card/list-card.component';
+
+import { CardModule } from '../card/card.module';
 
 @Component({
   selector: 'app-panier',
   standalone: true,
-  imports: [CommonModule, RouterLink, CardFormComponent, ListCardComponent],
+  imports: [CommonModule, RouterLink, CardModule],
   templateUrl: './panier.component.html',
   styleUrls: ['./panier.component.css']
 })

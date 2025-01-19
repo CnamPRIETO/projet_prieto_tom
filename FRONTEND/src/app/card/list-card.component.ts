@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { CartesService } from '../cartes.service';
-import { MaskCardPipe } from '../mask-card.pipe';
+import { CartesService } from './cartes.service';
+import { MaskCardPipe } from './mask-card.pipe';
 
 @Component({
   selector: 'app-list-card',

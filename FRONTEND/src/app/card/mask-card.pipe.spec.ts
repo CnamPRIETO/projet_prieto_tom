@@ -1,4 +1,4 @@
-import { MaskCardPipe } from './mask-card.pipe';
+import { MaskCardPipe } from '../mask-card.pipe';
 
 describe('MaskCardPipe', () => {
   it('create an instance', () => {

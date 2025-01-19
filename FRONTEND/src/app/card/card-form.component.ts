@@ -1,7 +1,7 @@
 import { Component } from '@angular/core';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
 import { NgIf, NgClass } from '@angular/common';
-import { CartesService } from '../cartes.service';
+import { CartesService } from './cartes.service';
 import { Card } from '../models/card.model';
 
 @Component({

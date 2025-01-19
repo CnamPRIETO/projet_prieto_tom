@@ -6,13 +6,13 @@ import { DelProduitDuPanier } from '../shared/actions/panier-action';
 import { Produit } from '../models/produit';
 import { Observable } from 'rxjs';
 import { RouterLink } from '@angular/router';
-import { CardFormComponent } from '../card-form/card-form.component';
-import { ListCardComponent } from '../list-card/list-card.component';
+
+import { CardModule } from '../card/card.module';
 
 @Component({
   selector: 'app-panier',
   standalone: true,
-  imports: [CommonModule, RouterLink, CardFormComponent, ListCardComponent],
+  imports: [CommonModule, RouterLink, CardModule],
   templateUrl: './panier.component.html',
   styleUrls: ['./panier.component.css']
 })
