@@ -7,7 +7,7 @@ module.exports = app => {
   
 
    
-    router.get("/",catalogue.getProduits);
+    router.get("/",checkJwt,catalogue.getProduits);
   
     app.use('/api/produits', router);
   };

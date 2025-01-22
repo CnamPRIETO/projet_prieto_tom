@@ -4,6 +4,7 @@ import { Observable, BehaviorSubject } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { RegisterResponse, LoginResponse, UpdateUserResponse } from "./models/auth-response.interface";
 import { User } from './models/user';
+import { Produit } from './models/produit';
 
 @Injectable({
   providedIn: 'root'
@@ -17,6 +18,15 @@ export class AuthService {
   get isLoggedIn(): Observable<boolean> {
     return this.loggedIn.asObservable();
   }
+
+  public getProduits(): Observable<Produit[]> {
+    const token = this.getToken(); 
+    if (!token) {
+      throw new Error('Pas de token pour l\'utilisateur connecté');
+    }
+    return this.apiService.getProduits(token);
+  }
+
 
   login(username: string, password: string): Observable<LoginResponse> {
     return this.apiService.login(username, password).pipe(

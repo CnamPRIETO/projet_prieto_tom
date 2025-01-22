@@ -13,7 +13,7 @@ exports.getProduits = async (req, res) => {
         const whereClause = {};
 
         if (ref) {
-            whereClause.ref = { [Op.iLike]: `%${ref}%` }; // Recherche insensible à la casse
+            whereClause.ref = { [Op.iLike]: `%${ref}%` }; 
         }
 
         if (description) {
@@ -26,12 +26,11 @@ exports.getProduits = async (req, res) => {
                 console.log("Prix invalide:", prix);
                 return res.status(400).json({ error: 'Le prix doit être un nombre.' });
             }
-            whereClause.prix = { [Op.lte]: prixNumber }; // Prix inférieur ou égal
+            whereClause.prix = { [Op.lte]: prixNumber }; 
         }
 
         console.log("Clause WHERE construite:", whereClause);
 
-        // Gestion de la pagination
         const pageNumber = parseInt(page) || 1;
         const limitNumber = parseInt(limit) || 10;
         const offset = (pageNumber - 1) * limitNumber;

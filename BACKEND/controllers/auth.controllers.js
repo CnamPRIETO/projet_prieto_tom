@@ -21,10 +21,33 @@ exports.register = async (req, res) => {
     } = req.body;
 
     // Exemple simple de vérification
-    const pattern = /^[A-Za-z0-9]{1,20}$/;
-    if (!pattern.test(username) || !pattern.test(password)) {
-        return res.status(400).json({ message: 'Format de nom d\'utilisateur ou mot de passe invalide.' });
+    const usernamePattern = /^[A-Za-z][A-Za-z0-9._]{2,29}$/;
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    const namePattern = /^[A-Za-zÀ-ÿ\s'-]{1,50}$/;
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const addressPattern = /^[A-Za-z0-9\s,.'\-#]{5,100}$/;
+    const phonePattern = /^\+?[0-9\s\-()]{7,20}$/;
+
+
+    if (!usernamePattern.test(username)) {
+        return res.status(400).json({ message: 'Format de nom d\'utilisateur invalide.' });
     }
+    if (!passwordPattern.test(password)) {
+        return res.status(400).json({ message: 'Format de mot de passe invalide. (minimum 8 char + 1maj +1 min + 1 chiffre + char spécial)' });
+    }
+    if (!namePattern.test(firstname) || !namePattern.test(lastname)) {
+        return res.status(400).json({ message: 'Format de prénom ou nom invalide.' });
+    }
+    if (!emailPattern.test(email)) {
+        return res.status(400).json({ message: 'Format d\'email invalide.' });
+    }
+    if (!addressPattern.test(address)) {
+        return res.status(400).json({ message: 'Format d\'adresse invalide.' });
+    }
+    if (!phonePattern.test(phone)) {
+        return res.status(400).json({ message: 'Format de numéro de téléphone invalide.' });
+    }
+
 
     try {
         const existingUser = await Utilisateurs.findOne({ where: { username } });
@@ -54,9 +77,14 @@ exports.register = async (req, res) => {
 exports.login = async (req, res) => {
     const { username, password } = req.body;
 
-    const pattern = /^[A-Za-z0-9]{1,20}$/;
-    if (!pattern.test(username) || !pattern.test(password)) {
-        return res.status(400).json({ message: 'Format de nom d\'utilisateur ou mot de passe invalide.' });
+    const usernamePattern = /^[A-Za-z][A-Za-z0-9._]{2,29}$/;
+    const passwordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+
+    if (!usernamePattern.test(username)) {
+        return res.status(400).json({ message: 'Format de nom d\'utilisateur invalide.' });
+    }
+    if (!passwordPattern.test(password)) {
+        return res.status(400).json({ message: 'Format de mot de passe invalide. (minimum 8 char + 1maj +1 min + 1 chiffre + char spécial)' });
     }
 
     try {
@@ -128,7 +156,6 @@ exports.updateUser = async (req, res) => {
     }
   };
 
-// Suppression de l'utilisateur
 exports.deleteUser = async (req, res) => {
     const userId = req.token.payload.id;
 
@@ -165,7 +192,6 @@ exports.getProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'Utilisateur non trouvé.' });
         }
-        // On renvoie les infos de l'utilisateur
         res.json(user);
     } catch (err) {
         console.error('Erreur lors de la récupération de l\'utilisateur:', err);

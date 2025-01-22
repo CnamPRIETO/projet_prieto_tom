@@ -6,6 +6,7 @@ import { ListeProduitsComponent } from '../liste-produits/liste-produits.compone
 import { CommonModule } from '@angular/common';
 import { Subscription } from 'rxjs';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../auth.service';
 
 @Component({
     selector: 'app-catalogue',
@@ -19,10 +20,10 @@ export class CatalogueComponent implements OnInit, OnDestroy {
   private subscription: Subscription = new Subscription();
   filtresRecherches : {ref : string, desc : string, prix : number | null} = {ref : "", desc : "", prix : null};
 
-  constructor(private apiService: ApiService) {   }
+  constructor(private AuthService: AuthService, private apiService: ApiService) {   }
 
   ngOnInit() {
-      this.subscription = this.apiService.getProduits().subscribe((produits) => { //On subcribe
+    this.AuthService.getProduits().subscribe((produits) => { //On subcribe
         this.produits = produits;
         this.appliquerLeFiltre();
       });
@@ -49,16 +50,21 @@ export class CatalogueComponent implements OnInit, OnDestroy {
     }
 
     if (Object.keys(criteria).length === 0) { //aucun filtre
-      this.subscription = this.apiService.getProduits().subscribe((produits) => {
+      this.subscription.add( this.AuthService.getProduits().subscribe((produits) => {
         this.produitsAvecFiltre = produits;
-      });
+      }));
     } else {
-      this.subscription = this.apiService.searchProduits(criteria).subscribe((produits) => {
+      const token = this.AuthService.getToken();
+      if (!token) {
+        console.error("Pas de token disponible. Impossible d'appeler searchProduits");
+        return;
+      }
+      this.subscription.add( this.apiService.searchProduits(criteria, token).subscribe((produits) => {
         this.produitsAvecFiltre = produits; // avec filtre
       }, (error) => {
         console.error('Erreur lors de la recherche des produits:', error);
         this.produitsAvecFiltre = [];
-      });
+      }));
     }
   }
   

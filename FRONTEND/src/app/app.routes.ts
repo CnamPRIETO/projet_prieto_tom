@@ -9,7 +9,7 @@ import { ProfilComponentComponent } from './profil-component/profil-component.co
 
 
 export const routes: Routes = [
-    { path: '', component: CatalogueComponent }, // Route racine
+    { path: '', component: CatalogueComponent, canActivate:[AuthGuard] }, // Route racine
     { path: 'panier', component: PanierComponent, canActivate: [AuthGuard] },
     { path: 'login', component: LoginComponent },
     { path: 'register', component: RegisterComponent },

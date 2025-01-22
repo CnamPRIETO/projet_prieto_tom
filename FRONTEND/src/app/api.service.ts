@@ -11,11 +11,9 @@ import { RegisterResponse, LoginResponse, UpdateUserResponse } from "./models/au
 export class ApiService{
     constructor (private http: HttpClient) {}
     
-    public getProduits(): Observable<Produit[]> {
-        return this.http.get<Produit[]>(environment.backendProduit);
-    }
 
-    public searchProduits(criteria: {ref?: string, description?: string, prix?: number}): Observable<Produit[]> {
+
+    public searchProduits(criteria: {ref?: string, description?: string, prix?: number}, token: string): Observable<Produit[]> {
         let params = new HttpParams();
         
         if (criteria.ref) {
@@ -29,8 +27,14 @@ export class ApiService{
         if (criteria.prix !== undefined && criteria.prix !== null) {
             params = params.set('prix', criteria.prix.toString());
         }
-        return this.http.get<Produit[]>(environment.backendProduit, { params });
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.get<Produit[]>(environment.backendProduit, { params, headers });
     }
+
+    public getProduits(token: string): Observable<Produit[]> {
+        const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
+        return this.http.get<Produit[]>(environment.backendProduit, { headers });
+      }
 
     // Authentification
     public register(username: string, password: string,firstname: string,lastname: string,email: string,address: string,phone: string): Observable<RegisterResponse> {

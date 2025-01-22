@@ -42,5 +42,6 @@ testem.log
 Thumbs.db
 #
 test.txt
-Script.sh
+ScriptsFichier.sh
+fichiers_combines.txt
 ../../.DS_Store
